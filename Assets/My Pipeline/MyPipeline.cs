@@ -8,7 +8,13 @@ public class MyPipeline : RenderPipeline {
 	
 
 	Material errorMaterial;
+	private CullingResults cullingResults;
+	private SortingSettings sortingSetting;
+	private DrawingSettings drawSetting ;
+	private FilteringSettings filterSetting;
 
+	private bool dynamicBatching = false;
+	private bool instancing = false;
 	CommandBuffer cameraBuffer = new CommandBuffer {
 		name = "Render Camera"
 	};
@@ -16,13 +22,12 @@ public class MyPipeline : RenderPipeline {
 	private ShaderTagId _shaderTag = new ShaderTagId("SRPDefaultUnlit");
 	private LightConfigurator _lightConfigurator = new LightConfigurator();
 	
-	private DrawingSettings CreateDrawSettings(Camera camera,SortingCriteria sortingCriteria){
-		var sortingSetting = new SortingSettings(camera);
-		sortingSetting.criteria =sortingCriteria;
-		var drawSetting = new DrawingSettings(_shaderTag, sortingSetting);
-		return drawSetting;
-	}
 	
+	public MyPipeline (bool dynamicBatching, bool instancing)
+	{
+		this.dynamicBatching = dynamicBatching;
+		this.instancing = instancing;
+	}
 	
 	protected override void Render(ScriptableRenderContext context, Camera[] cameras)
 	{
@@ -37,15 +42,6 @@ public class MyPipeline : RenderPipeline {
 
 	private void RenderPerCamera(ScriptableRenderContext context, Camera camera)
 	{
-		if (errorMaterial == null)
-		{
-			Shader errorShader = Shader.Find("Hidden/InternalErrorShader");
-			errorMaterial = new Material(errorShader)
-			{
-				hideFlags = HideFlags.HideAndDontSave
-			};
-		}
-
 		if (!camera.TryGetCullingParameters(out var cullingParams))
 		{
 			return;
@@ -63,17 +59,18 @@ public class MyPipeline : RenderPipeline {
 			camera.backgroundColor
 		);
 		
-		//cameraBuffer.ClearRenderTarget(true, false, Color.clear);
 		
 		//设置摄像机参数
 		context.SetupCameraProperties(camera);
 		//对场景进行裁剪
-		var cullingResults = context.Cull(ref cullingParams);
+		cullingResults = context.Cull(ref cullingParams);
 	
-		var sortingSetting = new SortingSettings(camera);
+		sortingSetting = new SortingSettings(camera);
 		sortingSetting.criteria =SortingCriteria.CommonOpaque;
-		var drawSetting = new DrawingSettings(new ShaderTagId("SRPDefaultUnlit"), sortingSetting);
-		var filterSetting = new FilteringSettings(RenderQueueRange.opaque);
+		drawSetting = new DrawingSettings(new ShaderTagId("SRPDefaultUnlit"), sortingSetting);
+		drawSetting.enableInstancing = instancing;
+		drawSetting.enableDynamicBatching = dynamicBatching;
+		filterSetting = new FilteringSettings(RenderQueueRange.opaque);
 		
 		context.DrawRenderers(cullingResults, ref drawSetting, ref filterSetting);
 		// context.ExecuteCommandBuffer(cameraBuffer);
@@ -83,7 +80,6 @@ public class MyPipeline : RenderPipeline {
 		
 		sortingSetting = new SortingSettings(camera);
 		sortingSetting.criteria =SortingCriteria.CommonTransparent;
-		drawSetting = new DrawingSettings(new ShaderTagId("SRPDefaultUnlit"), sortingSetting);
 		filterSetting = new FilteringSettings(RenderQueueRange.transparent);
 	
 		context.DrawRenderers(cullingResults, ref drawSetting, ref filterSetting);
@@ -102,28 +98,27 @@ public class MyPipeline : RenderPipeline {
 		{
 			return;
 		}
-		var cullingResults = context.Cull(ref cullingParams);
+		cullingResults = context.Cull(ref cullingParams);
 		if (errorMaterial == null) {
 			Shader errorShader = Shader.Find("Hidden/InternalErrorShader");
 			errorMaterial = new Material(errorShader) {
 				hideFlags = HideFlags.HideAndDontSave
 			};
 		}
-		var sortingSetting = new SortingSettings(camera);
+		sortingSetting = new SortingSettings(camera);
 		sortingSetting.criteria =SortingCriteria.RenderQueue;
-		var drawSettings = new DrawingSettings(new ShaderTagId("ForwardBase"), sortingSetting);
+		drawSetting = new DrawingSettings(new ShaderTagId("ForwardBase"), sortingSetting);
 		
-		var filterSettings = new FilteringSettings(RenderQueueRange.all);	
-		drawSettings.SetShaderPassName(1, new ShaderTagId("PrepassBase"));
-		drawSettings.SetShaderPassName(2, new ShaderTagId("Always"));
-		drawSettings.SetShaderPassName(3, new ShaderTagId("Vertex"));
-		drawSettings.SetShaderPassName(4, new ShaderTagId("VertexLMRGBM"));
-		drawSettings.SetShaderPassName(5, new ShaderTagId("VertexLM"));
-		drawSettings.overrideMaterialPassIndex=  0;
-		drawSettings.overrideMaterial = errorMaterial;
-		
-		context.DrawRenderers(
-			cullingResults, ref drawSettings,ref filterSettings
+		filterSetting = new FilteringSettings(RenderQueueRange.all);	
+		 drawSetting.SetShaderPassName(1, new ShaderTagId("PrepassBase"));
+		 drawSetting.SetShaderPassName(2, new ShaderTagId("Always"));
+		 drawSetting.SetShaderPassName(3, new ShaderTagId("Vertex"));
+		 drawSetting.SetShaderPassName(4, new ShaderTagId("VertexLMRGBM"));
+		 drawSetting.SetShaderPassName(5, new ShaderTagId("VertexLM"));
+		 drawSetting.overrideMaterialPassIndex=  0;
+		 drawSetting.overrideMaterial = errorMaterial;
+		 context.DrawRenderers(
+			cullingResults, ref drawSetting,ref filterSetting
 		);
 	}
 }
