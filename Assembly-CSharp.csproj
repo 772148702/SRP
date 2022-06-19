@@ -60,6 +60,7 @@
      <None Include="Assets\ShaderLibrary\Unlit.hlsl" />
      <None Include="Assets\ShaderLibrary\Lit.hlsl" />
      <None Include="Assets\Shaders\BlinnPhongSpecular.shader" />
+     <None Include="Assets\ShaderLibrary\ShadowCaster.hlsl" />
      <None Include="Assets\ShaderLibrary\Light.hlsl" />
      <None Include="Assets\Shaders\Unlit.shader" />
  <Reference Include="UnityEngine">
