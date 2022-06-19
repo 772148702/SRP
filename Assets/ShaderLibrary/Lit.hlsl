@@ -10,7 +10,7 @@ CBUFFER_END
 CBUFFER_START(UnityPerDraw)
 	float4x4 unity_ObjectToWorld;
 	real4 unity_LightData;
-	real4 unity_LightIndices[2];
+	real4 unity_LightIndices[8];
 CBUFFER_END
 
 #define MAX_VISIBLE_LIGHTS 16
@@ -79,12 +79,12 @@ VertexOutput LitPassVertex (VertexInput input) {
 	output.worldPos = worldPos.xyz;
 	
 	output.vertexLighting = 0;
-	for (int i = 4; i < min(unity_LightData.y, 8); i++) {
-		int lightIndex = unity_LightIndices[i - 4];
-		output.vertexLighting += 
-			DiffuseLight(lightIndex, output.normal, output.worldPos);
-	}
 
+	// for (int i = 4; i < min(unity_LightData.y, 8); i++) {
+	// 	int lightIndex = unity_LightIndices[i - 4];
+	// 	output.vertexLighting += 
+	// 		DiffuseLight(lightIndex, output.normal, output.worldPos);
+	// }
 	return output;
 }
 
@@ -96,8 +96,7 @@ float4 LitPassFragment (VertexOutput input) : SV_TARGET {
 	float3 diffuseLight = input.vertexLighting;
 	for (int i = 0; i < min(unity_LightData.y, 4); i++) {
 		int lightIndex = unity_LightIndices[i];
-		diffuseLight +=
-			DiffuseLight(lightIndex, input.normal, input.worldPos);
+		diffuseLight +=  DiffuseLight(lightIndex, input.normal, input.worldPos);
 	}
 	float3 color = diffuseLight * albedo;
 	return float4(color, 1);
