@@ -81,8 +81,7 @@ public class MyPipeline : RenderPipeline {
 // #endif
 	
 		
-		//设置摄像机参数
-		context.SetupCameraProperties(camera);
+	
 		//对场景进行裁剪
 		cullingResults = context.Cull(ref cullingParams);
 	
@@ -106,13 +105,15 @@ public class MyPipeline : RenderPipeline {
 		}
 		
 		
-		cameraBuffer.BeginSample("Render Camera");
+		//设置摄像机参数
+		context.SetupCameraProperties(camera);
 		CameraClearFlags clearFlags = camera.clearFlags;
 		cameraBuffer.ClearRenderTarget(
 			(clearFlags & CameraClearFlags.Depth) != 0,
 			(clearFlags & CameraClearFlags.Color) != 0,
 			camera.backgroundColor
 		);
+		cameraBuffer.BeginSample("Render Camera");
 		cameraBuffer.SetGlobalVectorArray(
 			visibleLightColorsId, visibleLightColors
 		);

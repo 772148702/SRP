@@ -139,12 +139,12 @@ VertexOutput LitPassVertex (VertexInput input) {
 	output.worldPos = worldPos.xyz;
 	
 	output.vertexLighting = 0;
-
-	// for (int i = 4; i < min(unity_LightData.y, 8); i++) {
-	// 	int lightIndex = unity_LightIndices[i - 4];
-	// 	output.vertexLighting += 
-	// 		DiffuseLight(lightIndex, output.normal, output.worldPos);
-	// }
+    
+	for (int i = 4; i < min(unity_LightData.y, 8); i++) {
+		int lightIndex = unity_LightIndices[i - 4];
+		output.vertexLighting += 
+			DiffuseLight(lightIndex, output.normal, output.worldPos,1);
+	}
 	return output;
 }
 
